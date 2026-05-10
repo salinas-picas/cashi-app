@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Copy-Item *)",
+      "PowerShell(New-Item *)",
+      "Bash(npm install *)",
+      "mcp__ide__getDiagnostics",
+      "Bash(node -e \"const pkg = require\\('./node_modules/expo-router/package.json'\\); console.log\\('expo-router:', pkg.version\\)\")",
+      "Bash(npx expo *)",
+      "Bash(node -e \"console.log\\('safe-area-context:', require\\('./node_modules/react-native-safe-area-context/package.json'\\).version\\); console.log\\('screens:', require\\('./node_modules/react-native-screens/package.json'\\).version\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: app móvil Cashi completa con CRUD de categorías, transacciones y pantalla de balance *)"
+    ]
+  }
+}
