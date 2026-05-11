@@ -2,6 +2,12 @@
 
 Aplicación móvil de finanzas personales construida con React Native y Expo. Permite registrar ingresos y gastos, organizar transacciones por categorías y consultar el balance total de forma sencilla.
 
+## Demo en video
+
+[Ver demo en Loom](https://www.loom.com/share/875a4a4a73284cd8878cf737df921dfe)
+
+---
+
 ## Capturas de pantalla
 
 | Login | Transacciones | Balance | Categorías |
