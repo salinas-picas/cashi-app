@@ -4,7 +4,7 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 
 ## Demo en video
 
-[Ver demo en Loom](https://www.loom.com/share/875a4a4a73284cd8878cf737df921dfe)
+[Ver demo en Loom](https://www.loom.com/share/d2aaaa17588a45c4a1b222e623df8756)
 
 ---
 
