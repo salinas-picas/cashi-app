@@ -5,4 +5,9 @@ export type Transaction = {
   description: string;
   date: string;
   categoryId: string;
+  photoUri?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
 };

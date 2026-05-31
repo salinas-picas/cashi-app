@@ -28,6 +28,8 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 | [Zod](https://zod.dev/) | ^4 | Validación de esquemas y formularios |
 | [React Native Screens](https://github.com/software-mansion/react-native-screens) | ~4.16 | Optimización de navegación nativa |
 | [Expo Status Bar](https://docs.expo.dev/versions/latest/sdk/status-bar/) | ~3 | Control de la barra de estado |
+| [Expo Image Picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | ~16 | Acceso a cámara y galería |
+| [Expo Location](https://docs.expo.dev/versions/latest/sdk/location/) | ~18 | Acceso a la ubicación GPS del dispositivo |
 
 ---
 
@@ -39,6 +41,9 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 - **Balance** — vista consolidada con total de ingresos, gastos y saldo neto
 - **Persistencia local** — todos los datos se guardan en AsyncStorage, sin backend requerido
 - **Navegación por tabs** — estructura de rutas con Expo Router (file-based routing)
+- **Foto adjunta** — tomar foto con la cámara o elegir desde la galería al registrar una transacción
+- **Ubicación GPS** — registrar las coordenadas actuales del dispositivo en cada transacción
+- **Permisos en pantalla** — mensajes de error inline (sin Alert) si el usuario deniega acceso a cámara, galería o ubicación
 
 ---
 
@@ -113,7 +118,9 @@ cashi-app/
 │   ├── useLogin.ts                # Lógica de autenticación
 │   ├── useTransactions.ts         # CRUD de transacciones
 │   ├── useCategories.ts           # CRUD de categorías
-│   └── useBalance.ts              # Cálculo de balance
+│   ├── useBalance.ts              # Cálculo de balance
+│   ├── useImagePicker.ts          # Cámara y galería (Evaluación 3)
+│   └── useLocation.ts             # GPS del dispositivo (Evaluación 3)
 ├── constants/
 │   └── colors.ts                  # Paleta de colores centralizada
 ├── assets/                        # Íconos y splash screen
@@ -135,6 +142,9 @@ Se utilizó Claude para definir los esquemas de validación con Zod v4, tanto pa
 
 ### Estructura de navegación con Expo Router
 Claude orientó la organización del sistema de rutas basado en archivos de Expo Router, incluyendo la configuración del tab navigator, las rutas dinámicas (`[id].tsx`) para edición de registros, y el manejo de pantallas ocultas en la barra de tabs.
+
+### Evaluación 3 — Sensores y permisos nativos
+Se integraron `expo-image-picker` y `expo-location` para acceder a hardware del dispositivo. Claude ayudó a diseñar los hooks `useImagePicker` y `useLocation`, con manejo de permisos granular y presentación de errores en pantalla (sin `Alert`) siguiendo las guías de UX de Expo.
 
 ---
 
