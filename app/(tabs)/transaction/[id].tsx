@@ -25,6 +25,7 @@ export default function TransactionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const isNew = id === 'new';
+  const numericId = isNew ? 0 : Number(id);
 
   const { agregar, actualizar, eliminar, getById } = useTransactions();
   const { categories, recargar: recargarCategorias } = useCategories();
@@ -44,7 +45,7 @@ export default function TransactionScreen() {
     if (!isNew) {
       setExisting(undefined);
       setLoadingData(true);
-      getById(id).then(t => {
+      getById(numericId).then(t => {
         setExisting(t);
         resetPhoto(t?.photoUri ?? null);
         resetLocation(t?.location ?? null);
@@ -76,17 +77,17 @@ export default function TransactionScreen() {
       if (isNew) {
         await agregar(fullData);
       } else {
-        await actualizar(id, fullData);
+        await actualizar(numericId, fullData);
       }
       router.back();
     },
-    [id, isNew, imagePicker.photoUri, locationHook.location]
+    [numericId, isNew, imagePicker.photoUri, locationHook.location]
   );
 
   const handleDelete = useCallback(async () => {
-    await eliminar(id);
+    await eliminar(numericId);
     router.back();
-  }, [id]);
+  }, [numericId]);
 
   const {
     amount, setAmount,
@@ -162,7 +163,7 @@ export default function TransactionScreen() {
         ) : (
           categories.map(cat => (
             <TouchableOpacity
-              key={cat.id}
+              key={cat.id.toString()}
               style={[styles.categoryBtn, categoryId === cat.id && styles.categoryBtnActive]}
               onPress={() => setCategoryId(cat.id)}
             >

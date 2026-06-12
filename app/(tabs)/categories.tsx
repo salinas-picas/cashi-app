@@ -35,7 +35,7 @@ export default function CategoriesScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={categories}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>No hay categorías</Text>}
         renderItem={({ item }) => (
@@ -47,12 +47,6 @@ export default function CategoriesScreen() {
           </TouchableOpacity>
         )}
       />
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push('/(tabs)/category/new')}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -72,21 +66,4 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600', color: colors.text },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
   error: { color: colors.danger, textAlign: 'center', padding: 12 },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    backgroundColor: colors.tint,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 32 },
 });

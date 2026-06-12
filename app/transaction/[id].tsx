@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +15,8 @@ import {
 import { useTransactions } from '../../hooks/useTransactions';
 import { useCategories } from '../../hooks/useCategories';
 import { useTransactionForm } from '../../hooks/useTransactionForm';
+import { useImagePicker } from '../../hooks/useImagePicker';
+import { useLocation } from '../../hooks/useLocation';
 import { colors } from '../../constants/colors';
 import { TransactionFormData } from '../../schemas/transaction.schema';
 import { Transaction } from '../../types/transaction';
@@ -22,21 +25,34 @@ export default function TransactionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const isNew = id === 'new';
+  const numericId = isNew ? 0 : Number(id);
 
   const { agregar, actualizar, eliminar, getById } = useTransactions();
   const { categories, recargar: recargarCategorias } = useCategories();
   const [existing, setExisting] = useState<Transaction | undefined>();
   const [loadingData, setLoadingData] = useState(!isNew);
 
+  const imagePicker = useImagePicker();
+  const locationHook = useLocation();
+  const { reset: resetPhoto } = imagePicker;
+  const { reset: resetLocation } = locationHook;
+
   useEffect(() => {
     recargarCategorias();
+    resetPhoto(null);
+    resetLocation(null);
+
     if (!isNew) {
-      getById(id).then(t => {
+      setExisting(undefined);
+      setLoadingData(true);
+      getById(numericId).then(t => {
         setExisting(t);
+        resetPhoto(t?.photoUri ?? null);
+        resetLocation(t?.location ?? null);
         setLoadingData(false);
       });
     }
-  }, [id]);
+  }, [id, resetPhoto, resetLocation]);
 
   const defaultValues = useMemo(
     () =>
@@ -53,20 +69,25 @@ export default function TransactionScreen() {
 
   const handleSubmit = useCallback(
     async (data: TransactionFormData) => {
+      const fullData: Omit<Transaction, 'id' | 'date'> = {
+        ...data,
+        ...(imagePicker.photoUri ? { photoUri: imagePicker.photoUri } : {}),
+        ...(locationHook.location ? { location: locationHook.location } : {}),
+      };
       if (isNew) {
-        await agregar(data);
+        await agregar(fullData);
       } else {
-        await actualizar(id, data);
+        await actualizar(numericId, fullData);
       }
       router.back();
     },
-    [id, isNew]
+    [numericId, isNew, imagePicker.photoUri, locationHook.location]
   );
 
   const handleDelete = useCallback(async () => {
-    await eliminar(id);
+    await eliminar(numericId);
     router.back();
-  }, [id]);
+  }, [numericId]);
 
   const {
     amount, setAmount,
@@ -138,11 +159,11 @@ export default function TransactionScreen() {
 
         <Text style={styles.label}>Categoría</Text>
         {categories.length === 0 ? (
-          <Text style={styles.hint}>Crea una categoría primero</Text>
+          <Text style={styles.hint}>Carga las categorías primero</Text>
         ) : (
           categories.map(cat => (
             <TouchableOpacity
-              key={cat.id}
+              key={cat.id.toString()}
               style={[styles.categoryBtn, categoryId === cat.id && styles.categoryBtnActive]}
               onPress={() => setCategoryId(cat.id)}
             >
@@ -152,6 +173,54 @@ export default function TransactionScreen() {
             </TouchableOpacity>
           ))
         )}
+
+        <Text style={styles.label}>Foto</Text>
+        <View style={styles.photoRow}>
+          <TouchableOpacity
+            style={[styles.mediaBtn, imagePicker.loading && styles.mediaBtnDisabled]}
+            onPress={imagePicker.takePhoto}
+            disabled={imagePicker.loading}
+          >
+            <Text style={styles.mediaBtnText}>Tomar foto</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.mediaBtn, imagePicker.loading && styles.mediaBtnDisabled]}
+            onPress={imagePicker.pickFromGallery}
+            disabled={imagePicker.loading}
+          >
+            <Text style={styles.mediaBtnText}>Elegir de galería</Text>
+          </TouchableOpacity>
+        </View>
+        {imagePicker.loading && <ActivityIndicator color={colors.tint} style={styles.loader} />}
+        {imagePicker.error ? <Text style={styles.error}>{imagePicker.error}</Text> : null}
+        {imagePicker.photoUri ? (
+          <View style={styles.photoContainer}>
+            <Image source={{ uri: imagePicker.photoUri }} style={styles.photo} resizeMode="cover" />
+            <TouchableOpacity onPress={imagePicker.clearPhoto} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>Quitar foto</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        <Text style={styles.label}>Ubicación</Text>
+        <TouchableOpacity
+          style={[styles.mediaBtn, locationHook.loading && styles.mediaBtnDisabled]}
+          onPress={locationHook.getLocation}
+          disabled={locationHook.loading}
+        >
+          <Text style={styles.mediaBtnText}>Registrar ubicación</Text>
+        </TouchableOpacity>
+        {locationHook.loading && <ActivityIndicator color={colors.tint} style={styles.loader} />}
+        {locationHook.error ? <Text style={styles.error}>{locationHook.error}</Text> : null}
+        {locationHook.location ? (
+          <View style={styles.locationContainer}>
+            <Text style={styles.locationText}>Lat: {locationHook.location.latitude.toFixed(6)}</Text>
+            <Text style={styles.locationText}>Lon: {locationHook.location.longitude.toFixed(6)}</Text>
+            <TouchableOpacity onPress={locationHook.clearLocation} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>Quitar ubicación</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -227,4 +296,30 @@ const styles = StyleSheet.create({
     borderColor: colors.danger,
   },
   deleteButtonText: { color: colors.danger, fontWeight: '600', fontSize: 16 },
+  photoRow: { flexDirection: 'row', gap: 12 },
+  mediaBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.tint,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  mediaBtnDisabled: { opacity: 0.5 },
+  mediaBtnText: { color: colors.tint, fontWeight: '500' },
+  loader: { marginTop: 8 },
+  photoContainer: { marginTop: 12 },
+  photo: { width: '100%', height: 200, borderRadius: 10 },
+  clearBtn: { marginTop: 8, alignItems: 'center' },
+  clearBtnText: { color: colors.danger, fontSize: 13 },
+  locationContainer: {
+    marginTop: 8,
+    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  locationText: { color: colors.text, fontSize: 14 },
 });

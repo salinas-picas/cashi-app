@@ -1,27 +1,29 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../constants/colors';
 
-const USER_EMAIL = 'usuario@correo.com';
-
 export default function ProfileScreen() {
+  const { email, logout } = useAuth();
   const router = useRouter();
+  const displayEmail = email ?? '';
 
-  function handleLogout() {
-    router.dismissAll();
-  }
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {USER_EMAIL.charAt(0).toUpperCase()}
+            {displayEmail.charAt(0).toUpperCase()}
           </Text>
         </View>
 
         <Text style={styles.label}>Correo electrónico</Text>
-        <Text style={styles.email}>{USER_EMAIL}</Text>
+        <Text style={styles.email}>{displayEmail}</Text>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Cerrar sesión</Text>

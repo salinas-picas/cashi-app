@@ -21,14 +21,15 @@ export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const isNew = id === 'new';
+  const numericId = isNew ? 0 : Number(id);
 
-  const { agregar, actualizar, eliminar, getById } = useCategories();
+  const { getById } = useCategories();
   const [existing, setExisting] = useState<Category | undefined>();
   const [loadingData, setLoadingData] = useState(!isNew);
 
   useEffect(() => {
     if (!isNew) {
-      getById(id).then(c => {
+      getById(numericId).then(c => {
         setExisting(c);
         setLoadingData(false);
       });
@@ -41,21 +42,15 @@ export default function CategoryScreen() {
   );
 
   const handleSubmit = useCallback(
-    async (data: CategoryFormData) => {
-      if (isNew) {
-        await agregar(data);
-      } else {
-        await actualizar(id, data);
-      }
+    async (_data: CategoryFormData) => {
       router.back();
     },
     [id, isNew]
   );
 
   const handleDelete = useCallback(async () => {
-    await eliminar(id);
     router.back();
-  }, [id]);
+  }, [numericId]);
 
   const { name, setName, error, handleSubmit: submit } = useCategoryForm({
     mode: isNew ? 'create' : 'edit',
@@ -77,7 +72,7 @@ export default function CategoryScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{isNew ? 'Nueva categoría' : 'Editar categoría'}</Text>
+        <Text style={styles.title}>{isNew ? 'Nueva categoría' : 'Ver categoría'}</Text>
 
         <Text style={styles.label}>Nombre</Text>
         <TextInput
@@ -86,17 +81,18 @@ export default function CategoryScreen() {
           placeholderTextColor={colors.muted}
           value={name}
           onChangeText={setName}
+          editable={false}
         />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <TouchableOpacity style={styles.button} onPress={submit}>
-          <Text style={styles.buttonText}>{isNew ? 'Crear' : 'Guardar'}</Text>
+          <Text style={styles.buttonText}>{isNew ? 'Crear' : 'Cerrar'}</Text>
         </TouchableOpacity>
 
         {!isNew && (
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Eliminar</Text>
+            <Text style={styles.deleteButtonText}>Volver</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -134,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: colors.border,
   },
-  deleteButtonText: { color: colors.danger, fontWeight: '600', fontSize: 16 },
+  deleteButtonText: { color: colors.muted, fontWeight: '600', fontSize: 16 },
 });

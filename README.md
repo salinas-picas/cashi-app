@@ -1,6 +1,6 @@
 # Cashi — Finanzas Personales
 
-Aplicación móvil de finanzas personales construida con React Native y Expo. Permite registrar ingresos y gastos, organizar transacciones por categorías y consultar el balance total de forma sencilla.
+Aplicación móvil de finanzas personales construida con React Native y Expo. Permite registrar ingresos y gastos, organizar transacciones por categorías y consultar el balance total de forma sencilla, con datos persistidos en una API REST remota.
 
 ## Demo en video
 
@@ -8,11 +8,48 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 
 ---
 
-## Capturas de pantalla
+## API consumida
 
-| Login | Transacciones | Balance | Categorías |
-|-------|--------------|---------|-----------|
-| Pantalla de acceso con validación | Listado y CRUD de movimientos | Resumen de ingresos y gastos | Gestión de categorías |
+**URL base:** `https://cashi-api-hp21.onrender.com`
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/auth/register` | Registrar nuevo usuario |
+| POST | `/auth/login` | Iniciar sesión |
+| GET | `/categories` | Listar categorías |
+| GET | `/transactions` | Listar transacciones |
+| GET | `/transactions/:id` | Obtener transacción por ID |
+| POST | `/transactions` | Crear transacción |
+| PATCH | `/transactions/:id` | Actualizar transacción |
+| DELETE | `/transactions/:id` | Eliminar transacción |
+| GET | `/transactions/balance` | Consultar balance |
+| POST | `/transactions/upload` | Subir foto de recibo |
+
+---
+
+## Qué cambió respecto a Evaluación 3
+
+| Aspecto | Evaluación 3 | Evaluación 4 |
+|---------|-------------|-------------|
+| Autenticación | Credenciales hardcodeadas | Registro/login real contra API REST |
+| Persistencia | AsyncStorage local | API REST remota (Prisma + PostgreSQL) |
+| Tokens | No había | JWT guardado en `expo-secure-store` |
+| IDs | `string` (Date.now) | `number` (Prisma Int autoincrement) |
+| Balance | Calculado en cliente | Endpoint dedicado en la API |
+| Categorías | CRUD local | Solo lectura desde la API |
+| Contexto global | No había | `AuthContext` con `useAuth()` hook |
+| Capa de red | No había | `services/apiService.ts` centralizado |
+| Registro | No había | Pantalla `register.tsx` nueva |
+| Foto de recibo | Se guardaba URI local | Se sube primero a `/transactions/upload`, se persiste la URL remota |
+| Coordenadas GPS | Se guardaban en AsyncStorage | Se envían como `latitude`/`longitude` en el body al crear la transacción |
+
+---
+
+## Arquitectura
+
+- **`services/apiService.ts`** — centraliza todo el `fetch`. Función genérica `request<T>()` que agrega `Content-Type` y `Authorization: Bearer` automáticamente, maneja errores HTTP y de red, y normaliza la respuesta de transacciones (convierte `latitude`/`longitude` planos a `{ location: { latitude, longitude } }`).
+- **`contexts/AuthContext.tsx`** — provee el token JWT y el email vía `useAuth()`. Los componentes nunca acceden a `SecureStore` directamente; solo llaman a `login()`, `logout()` o `register()`.
+- **Hooks de datos** — `useTransactions`, `useCategories` y `useBalance` obtienen el token de `useAuth()` internamente; las pantallas no reciben ni manejan el token como parámetro.
 
 ---
 
@@ -24,10 +61,8 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 | [Expo](https://expo.dev/) | ~54 | Toolchain y build system |
 | [TypeScript](https://www.typescriptlang.org/) | ~5.9 | Tipado estático |
 | [Expo Router](https://expo.github.io/router/) | ^6 | Navegación basada en sistema de archivos |
-| [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) | 2.2 | Persistencia local de datos |
+| [Expo Secure Store](https://docs.expo.dev/versions/latest/sdk/securestore/) | ~14 | Almacenamiento seguro del JWT |
 | [Zod](https://zod.dev/) | ^4 | Validación de esquemas y formularios |
-| [React Native Screens](https://github.com/software-mansion/react-native-screens) | ~4.16 | Optimización de navegación nativa |
-| [Expo Status Bar](https://docs.expo.dev/versions/latest/sdk/status-bar/) | ~3 | Control de la barra de estado |
 | [Expo Image Picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | ~16 | Acceso a cámara y galería |
 | [Expo Location](https://docs.expo.dev/versions/latest/sdk/location/) | ~18 | Acceso a la ubicación GPS del dispositivo |
 
@@ -35,22 +70,21 @@ Aplicación móvil de finanzas personales construida con React Native y Expo. Pe
 
 ## Características
 
-- **Autenticación** — pantalla de login con validación de credenciales mediante Zod
-- **Transacciones** — crear, editar y eliminar ingresos y gastos
-- **Categorías** — CRUD completo para organizar los movimientos
-- **Balance** — vista consolidada con total de ingresos, gastos y saldo neto
-- **Persistencia local** — todos los datos se guardan en AsyncStorage, sin backend requerido
-- **Navegación por tabs** — estructura de rutas con Expo Router (file-based routing)
-- **Foto adjunta** — tomar foto con la cámara o elegir desde la galería al registrar una transacción
-- **Ubicación GPS** — registrar las coordenadas actuales del dispositivo en cada transacción
-- **Permisos en pantalla** — mensajes de error inline (sin Alert) si el usuario deniega acceso a cámara, galería o ubicación
+- **Autenticación real** — registro y login contra API REST; token JWT persistido con SecureStore
+- **Transacciones** — crear, editar y eliminar ingresos y gastos sincronizados con la API
+- **Categorías** — listado desde la API (solo lectura)
+- **Balance** — calculado por el servidor y mostrado en tiempo real
+- **Foto adjunta** — tomar foto o elegir de galería; se sube automáticamente al guardar la transacción
+- **Ubicación GPS** — coordenadas registradas y enviadas al backend
+- **Navegación por tabs** — estructura de rutas con Expo Router
+- **Redirección automática** — `_layout.tsx` detecta el token y redirige entre login y tabs
 
 ---
 
 ## Requisitos previos
 
 - [Node.js](https://nodejs.org/) >= 18
-- [npm](https://www.npmjs.com/) >= 9 (o yarn / pnpm)
+- [npm](https://www.npmjs.com/) >= 9
 - [Expo Go](https://expo.dev/go) instalado en tu dispositivo físico, **o** un emulador Android/iOS configurado
 
 ---
@@ -87,64 +121,50 @@ npm run web        # Lanza en navegador
 
 ---
 
-## Credenciales de acceso
-
-La app incluye un usuario de prueba preconfigurado:
-
-| Campo | Valor |
-|---|---|
-| Email | `usuario@correo.com` |
-| Contraseña | `1234` |
-
-> Los datos de sesión y transacciones se almacenan localmente en el dispositivo mediante AsyncStorage.
-
----
-
 ## Estructura del proyecto
 
 ```
 cashi-app/
 ├── app/
 │   ├── index.tsx                  # Pantalla de login
-│   ├── _layout.tsx                # Root layout (Stack)
+│   ├── register.tsx               # Pantalla de registro (nueva)
+│   ├── _layout.tsx                # Root layout con AuthProvider y guard de rutas
 │   └── (tabs)/
 │       ├── _layout.tsx            # Tab navigator
 │       ├── index.tsx              # Lista de transacciones
 │       ├── balance.tsx            # Pantalla de balance
 │       ├── categories.tsx         # Lista de categorías
+│       ├── profile.tsx            # Perfil y logout
 │       ├── transaction/[id].tsx   # Detalle / edición de transacción
-│       └── category/[id].tsx      # Detalle / edición de categoría
+│       └── category/[id].tsx      # Detalle de categoría
+├── contexts/
+│   └── AuthContext.tsx            # AuthProvider + useAuth hook (nuevo)
+├── services/
+│   └── apiService.ts              # Capa HTTP centralizada (nuevo)
 ├── hooks/
-│   ├── useLogin.ts                # Lógica de autenticación
-│   ├── useTransactions.ts         # CRUD de transacciones
-│   ├── useCategories.ts           # CRUD de categorías
-│   ├── useBalance.ts              # Cálculo de balance
-│   ├── useImagePicker.ts          # Cámara y galería (Evaluación 3)
-│   └── useLocation.ts             # GPS del dispositivo (Evaluación 3)
+│   ├── useLogin.ts                # Lógica de autenticación (reescrito)
+│   ├── useTransactions.ts         # CRUD de transacciones via API (reescrito)
+│   ├── useCategories.ts           # Categorías via API (reescrito)
+│   ├── useBalance.ts              # Balance via API (reescrito)
+│   ├── useTransactionForm.ts      # Formulario de transacción (actualizado)
+│   ├── useImagePicker.ts          # Cámara y galería
+│   └── useLocation.ts             # GPS del dispositivo
+├── types/
+│   ├── transaction.ts             # id: number, categoryId: number
+│   └── category.ts                # id: number
+├── schemas/
+│   ├── transaction.schema.ts      # categoryId: z.number()
+│   └── category.schema.ts
 ├── constants/
-│   └── colors.ts                  # Paleta de colores centralizada
-├── assets/                        # Íconos y splash screen
-├── package.json
-└── tsconfig.json
+│   └── colors.ts
+└── package.json
 ```
 
 ---
 
 ## Uso de Inteligencia Artificial en el desarrollo
 
-Este proyecto fue desarrollado con el apoyo de **Claude** (Anthropic) a través de [claude.ai](https://claude.ai) y **Claude Code** (CLI), las cuales agilizaron y enriquecieron el proceso de desarrollo en las siguientes áreas:
-
-### Arquitectura de hooks
-Claude ayudó a diseñar la separación de lógica de negocio en hooks reutilizables (`useTransactions`, `useCategories`, `useBalance`, `useLogin`), siguiendo el principio de responsabilidad única y facilitando la testabilidad del código.
-
-### Validación con Zod
-Se utilizó Claude para definir los esquemas de validación con Zod v4, tanto para los formularios de login como para la creación y edición de transacciones y categorías, asegurando tipos seguros en tiempo de ejecución.
-
-### Estructura de navegación con Expo Router
-Claude orientó la organización del sistema de rutas basado en archivos de Expo Router, incluyendo la configuración del tab navigator, las rutas dinámicas (`[id].tsx`) para edición de registros, y el manejo de pantallas ocultas en la barra de tabs.
-
-### Evaluación 3 — Sensores y permisos nativos
-Se integraron `expo-image-picker` y `expo-location` para acceder a hardware del dispositivo. Claude ayudó a diseñar los hooks `useImagePicker` y `useLocation`, con manejo de permisos granular y presentación de errores en pantalla (sin `Alert`) siguiendo las guías de UX de Expo.
+Se utilizó Claude (claude.ai y Claude Code) como asistente de desarrollo para la migración de AsyncStorage a la API REST, incluyendo la implementación de AuthContext, apiService y la reescritura de los hooks. Todo el código fue revisado y entendido.
 
 ---
 

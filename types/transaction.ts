@@ -1,10 +1,10 @@
 export type Transaction = {
-  id: string;
+  id: number;
   amount: number;
   type: 'income' | 'expense';
   description: string;
   date: string;
-  categoryId: string;
+  categoryId: number;
   photoUri?: string;
   location?: {
     latitude: number;

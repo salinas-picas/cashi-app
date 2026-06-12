@@ -25,7 +25,7 @@ export default function TransactionsScreen() {
     }, [recargar, recargarCategorias])
   );
 
-  const getCategoryName = (categoryId: string) =>
+  const getCategoryName = (categoryId: number) =>
     categories.find(c => c.id === categoryId)?.name ?? 'Sin categoría';
 
   if (loading) {
@@ -41,7 +41,7 @@ export default function TransactionsScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={transactions}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>No hay transacciones</Text>}
         renderItem={({ item }) => (

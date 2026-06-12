@@ -14,10 +14,9 @@ export function useTransactionForm({ mode, defaultValues, onSubmit }: Props) {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryId, setCategoryId] = useState<number | ''>('');
   const [error, setError] = useState('');
 
-  // Reset every time the screen gains focus in create mode
   useFocusEffect(
     useCallback(() => {
       if (mode === 'create') {
@@ -30,7 +29,6 @@ export function useTransactionForm({ mode, defaultValues, onSubmit }: Props) {
     }, [mode])
   );
 
-  // Populate fields once when editing and defaultValues arrive
   useEffect(() => {
     if (mode === 'edit' && defaultValues) {
       if (defaultValues.amount !== undefined) setAmount(defaultValues.amount.toString());

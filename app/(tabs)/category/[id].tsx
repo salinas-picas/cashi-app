@@ -21,14 +21,15 @@ export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const isNew = id === 'new';
+  const numericId = isNew ? 0 : Number(id);
 
-  const { agregar, actualizar, eliminar, getById } = useCategories();
+  const { getById } = useCategories();
   const [existing, setExisting] = useState<Category | undefined>();
   const [loadingData, setLoadingData] = useState(!isNew);
 
   useEffect(() => {
     if (!isNew) {
-      getById(id).then(c => {
+      getById(numericId).then(c => {
         setExisting(c);
         setLoadingData(false);
       });
@@ -41,21 +42,15 @@ export default function CategoryScreen() {
   );
 
   const handleSubmit = useCallback(
-    async (data: CategoryFormData) => {
-      if (isNew) {
-        await agregar(data);
-      } else {
-        await actualizar(id, data);
-      }
+    async (_data: CategoryFormData) => {
       router.back();
     },
     [id, isNew]
   );
 
   const handleDelete = useCallback(async () => {
-    await eliminar(id);
     router.back();
-  }, [id]);
+  }, [numericId]);
 
   const { name, setName, error, handleSubmit: submit } = useCategoryForm({
     mode: isNew ? 'create' : 'edit',
