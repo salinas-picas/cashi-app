@@ -162,6 +162,19 @@ cashi-app/
 
 ---
 
+## Bugs encontrados y solucionados durante la integración
+
+| Bug | Causa | Solución |
+|-----|-------|----------|
+| Logout no redirigía al login | La ruta `/` era ambigua entre `app/index.tsx` y `app/(tabs)/index.tsx`; `router.replace('/')` desde dentro de tabs resolvía a la tab de transacciones | Se creó `app/login.tsx` con ruta única `/login`; `app/index.tsx` quedó como `<Redirect href="/login" />` |
+| Error genérico al crear transacción | `request()` en `apiService` no extraía el mensaje real del body de la API y caía siempre en `'Error desconocido'` | Se mejoró `request()` para leer el body como texto, parsearlo y extraer `error`, `message` o `detail` antes de usar el fallback genérico |
+| Falta el campo `date` al crear transacción | El schema de la API requiere `date` (ISO string) y `agregar()` no lo enviaba | Se agregó `date: new Date().toISOString()` al body en `agregar()` |
+| 404 al subir foto al editar | Endpoint incorrecto: `/upload/receipt` en vez de `/transactions/upload` | Corregido el endpoint en `apiService.uploadReceipt` |
+| 404 al editar transacción | `apiService.updateTransaction` usaba método `PUT`, pero la API solo registra `PATCH /transactions/:id` | Cambiado a `PATCH` |
+| 404 en balance | `apiService.getBalance` apuntaba a `/balance` en vez de `/transactions/balance` | Corregido el endpoint en `apiService.getBalance` |
+
+---
+
 ## Uso de Inteligencia Artificial en el desarrollo
 
 Se utilizó Claude (claude.ai y Claude Code) como asistente de desarrollo para la migración de AsyncStorage a la API REST, incluyendo la implementación de AuthContext, apiService y la reescritura de los hooks. Todo el código fue revisado y entendido.
